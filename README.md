@@ -2,9 +2,7 @@
 
 ## 📚 Документація
 
-- **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Повна структура проекту
 - **[VIRTUALENV.md](VIRTUALENV.md)** - Робота з віртуальним середовищем
-- **[EXAMPLES.md](EXAMPLES.md)** - Приклади всіх команд
 - **README.md** (цей файл) - Загальний огляд проекту
 
 ## Структура проекту
@@ -78,13 +76,16 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 4. Створіть міграції та застосуйте їх
+### 4. Застосуйте міграції Alembic
+
+Схема БД керується виключно Alembic — ніяких `Base.metadata.create_all`.
 
 ```bash
-# Створити міграцію
-alembic revision --autogenerate -m "Initial migration"
+# Застосувати існуючі міграції (створить усі таблиці)
+alembic upgrade head
 
-# Застосувати міграцію
+# За потреби — згенерувати нову міграцію після змін у models.py
+alembic revision --autogenerate -m "Опис змін"
 alembic upgrade head
 ```
 
@@ -93,6 +94,9 @@ alembic upgrade head
 ```bash
 python seed.py
 ```
+
+> `seed.py` сам викликає `alembic upgrade head` перед наповненням,
+> тож схема завжди приводиться до актуальної версії через міграції.
 
 ## Використання
 
@@ -112,6 +116,31 @@ python seed.py
 10. `select_10(student_id, teacher_id)` - Курси студента у викладача
 11. `select_11(teacher_id, student_id)` - Середній бал викладача студенту (бонус)
 12. `select_12(group_id, subject_id)` - Оцінки на останньому занятті (бонус)
+
+### CLI (CRUD) — приклади
+
+CRUD підтримано для всіх моделей: `Teacher`, `Group`, `Student`, `Subject`, `Grade`.
+
+```bash
+# Teacher / Group
+python main.py -a create -m Teacher -n "Boris Jonson"
+python main.py -a list   -m Teacher
+python main.py -a update -m Teacher --id 3 -n "Andry Bezos"
+python main.py -a remove -m Teacher --id 3
+
+python main.py -a create -m Group -n "AD-101"
+
+# Student / Subject
+python main.py -a create -m Student -n "Ivan Ivanov" --group_id 1
+python main.py -a create -m Subject -n "Математика" --teacher_id 2
+
+# Grade
+python main.py -a create -m Grade --student_id 1 --subject_id 2 -g 92.5
+python main.py -a create -m Grade --student_id 1 --subject_id 2 -g 88 --date "2026-04-21 10:30"
+python main.py -a list   -m Grade
+python main.py -a update -m Grade --id 5 -g 95
+python main.py -a remove -m Grade --id 5
+```
 
 ## Особливості реалізації
 

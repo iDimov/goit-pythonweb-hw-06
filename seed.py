@@ -1,7 +1,12 @@
 import random
 from datetime import datetime, timedelta
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
 from faker import Faker
-from config import SessionLocal, engine, Base
+
+from config import SessionLocal
 from models import Group, Student, Teacher, Subject, Grade
 
 fake = Faker('uk_UA')  # Ukrainian locale
@@ -112,11 +117,18 @@ def create_grades(session, students, subjects):
     return grades
 
 
+def run_migrations():
+    """Apply Alembic migrations up to head before populating the database."""
+    alembic_cfg = Config(str(Path(__file__).resolve().parent / "alembic.ini"))
+    command.upgrade(alembic_cfg, "head")
+    print("Applied Alembic migrations (upgrade head)")
+
+
 def seed_database():
     """Main function to seed the database"""
-    # Create tables
-    Base.metadata.create_all(bind=engine)
-    
+    # Schema is managed exclusively by Alembic — bring it up to date first.
+    run_migrations()
+
     # Create session
     session = SessionLocal()
     
